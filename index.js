@@ -1,8 +1,10 @@
 #!/usr/bin/env node
+const path = require("path");
 require("dotenv").config({
-  path: require("path").join(__dirname, ".env"),
+  path: path.join(__dirname, ".env"),
   quiet: true,
 });
+
 const { program } = require("commander");
 const chalk = require("chalk");
 const {
@@ -12,6 +14,7 @@ const {
   addLolAccount,
   removeLolAccount,
   getLolAccounts,
+  importFromFile,
 } = require("./storage");
 const { getStreamer, getLiveStatus } = require("./api/twitch");
 const {
@@ -44,6 +47,8 @@ program
     }
 
     const lolAccounts = [];
+
+    // Handle --lol option
     if (options.lol) {
       const entries = options.lol.split(",").map((e) => e.trim());
       for (const entry of entries) {
@@ -62,6 +67,7 @@ program
       }
     }
 
+    // Add the main streamer
     const added = addStreamer(twitch, lolAccounts);
     if (!added) {
       console.log(chalk.yellow(`⚠ ${twitch} is already in the list`));
@@ -76,6 +82,12 @@ program
     }
   });
 
+program
+  .command("import <file>")
+  .description("Import streamers and/or LoL accounts from a JSON file")
+  .action(async (file) => {
+    await importFromFile(file, getStreamer);
+  });
 program
   .command("remove <twitch>")
   .description("Remove a streamer")
@@ -248,7 +260,8 @@ program
   .description(
     "Infodump su un account LoL. Formato: gameName#tag#region. Se omesso controlla tutti.",
   )
-  .action(async (account) => {
+  .option("--brief", "Mostra solo informazioni essenziali (rank e WR)")
+  .action(async (account, options) => {
     let targets = [];
 
     if (account) {
@@ -268,102 +281,195 @@ program
       }
     }
 
-    for (const acc of targets) {
+    // Brief mode header
+    if (options.brief) {
       console.log(
-        chalk.bold(`\n── ${acc.gameName}#${acc.tagLine} (${acc.region}) ──`),
+        chalk.bold(
+          "Account".padEnd(30) +
+            "SoloQ".padEnd(25) +
+            "FlexQ".padEnd(25) +
+            "Last Game",
+        ),
       );
+      console.log("─".repeat(95));
+    }
 
-      try {
-        // Fetch and print rank immediately
-        const riot = await getAccountByRiotId(
-          acc.gameName,
-          acc.tagLine,
-          acc.region,
-        );
-
-        const rank = await getRankInfo(riot.puuid, acc.region);
-        const soloQ = rank.find((r) => r.queueType === "RANKED_SOLO_5x5");
-        const flexQ = rank.find((r) => r.queueType === "RANKED_FLEX_SR");
-
-        if (soloQ) {
-          const wr = ((soloQ.wins / (soloQ.wins + soloQ.losses)) * 100).toFixed(
-            1,
+    for (const acc of targets) {
+      if (options.brief) {
+        // Brief mode - 3 API calls per account
+        try {
+          const riot = await getAccountByRiotId(
+            acc.gameName,
+            acc.tagLine,
+            acc.region,
           );
+
+          const rank = await getRankInfo(riot.puuid, acc.region);
+          const soloQ = rank.find((r) => r.queueType === "RANKED_SOLO_5x5");
+          const flexQ = rank.find((r) => r.queueType === "RANKED_FLEX_SR");
+
+          const accountStr = `${acc.gameName}#${acc.tagLine} (${acc.region})`;
+
+          let soloQStr = "Unranked";
+          if (soloQ) {
+            const wr = (
+              (soloQ.wins / (soloQ.wins + soloQ.losses)) *
+              100
+            ).toFixed(1);
+            soloQStr = `${soloQ.tier} ${soloQ.rank} ${soloQ.leaguePoints}LP ${wr}%WR`;
+          }
+
+          let flexQStr = "Unranked";
+          if (flexQ) {
+            const wr = (
+              (flexQ.wins / (flexQ.wins + flexQ.losses)) *
+              100
+            ).toFixed(1);
+            flexQStr = `${flexQ.tier} ${flexQ.rank} ${flexQ.leaguePoints}LP ${wr}%WR`;
+          }
+
+          // Fetch last game date (1 additional API call)
+          let lastGameStr = "N/A";
+          try {
+            const matchIds = await getMatchHistory(riot.puuid, acc.region, 1);
+            if (matchIds.length > 0) {
+              const lastMatch = await getMatch(matchIds[0], acc.region);
+              const lastGameDate = new Date(lastMatch.info.gameStartTimestamp);
+              const now = new Date();
+              const diffMs = now - lastGameDate;
+              const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+              const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+              if (diffHours < 1) {
+                lastGameStr = "<1h ago";
+              } else if (diffHours < 24) {
+                lastGameStr = `${diffHours}h ago`;
+              } else if (diffDays === 1) {
+                lastGameStr = "Yesterday";
+              } else if (diffDays < 7) {
+                lastGameStr = `${diffDays}d ago`;
+              } else {
+                lastGameStr = lastGameDate.toLocaleDateString("it-IT");
+              }
+            }
+          } catch (err) {
+            lastGameStr = "Error";
+          }
+
           console.log(
-            `  SoloQ: ${soloQ.tier} ${soloQ.rank} ${soloQ.leaguePoints}LP (${soloQ.wins}W ${soloQ.losses}L) ${wr}% WR`,
+            accountStr.padEnd(30) +
+              soloQStr.padEnd(25) +
+              flexQStr.padEnd(25) +
+              lastGameStr,
           );
-        } else {
-          console.log(`  SoloQ: Unranked`);
-        }
-
-        if (flexQ) {
-          const wr = ((flexQ.wins / (flexQ.wins + flexQ.losses)) * 100).toFixed(
-            1,
-          );
+        } catch (err) {
           console.log(
-            `  FlexQ: ${flexQ.tier} ${flexQ.rank} ${flexQ.leaguePoints}LP (${flexQ.wins}W ${flexQ.losses}L) ${wr}% WR`,
-          );
-        } else {
-          console.log(`  FlexQ: Unranked`);
-        }
-
-        // Fetch and print in-game status immediately
-        const inGame = await getCurrentGame(riot.puuid, acc.region);
-        if (inGame) {
-          const player = inGame.participants.find(
-            (p) => p.puuid === riot.puuid,
-          );
-          const champName = player?.championId
-            ? await getChampionName(player.championId)
-            : "unknown";
-          console.log(chalk.yellow(`  🎮 In game — ${champName}`));
-        }
-
-        // Fetch match IDs, then print each match as it loads
-        const matchIds = await getMatchHistory(riot.puuid, acc.region, 20);
-        console.log(chalk.cyan(`\n  Last ${matchIds.length} Games:`));
-
-        let totalWins = 0;
-        let totalGames = 0;
-
-        for (const matchId of matchIds) {
-          const match = await getMatch(matchId, acc.region);
-          const player = match.info.participants.find(
-            (p) => p.puuid === riot.puuid,
-          );
-          if (!player) continue;
-
-          const won = player.win;
-          const kda = `${player.kills}/${player.deaths}/${player.assists}`;
-          const champ = player.championName;
-          const cs = player.totalMinionsKilled + player.neutralMinionsKilled;
-          const duration = Math.floor(match.info.gameDuration / 60);
-          const queue = getQueueName(match.info.queueId);
-          const date = new Date(
-            match.info.gameStartTimestamp,
-          ).toLocaleDateString("it-IT");
-
-          totalGames++;
-          if (won) totalWins++;
-
-          // Print each match immediately as it resolves
-          const result = won ? chalk.green("W") : chalk.red("L");
-          console.log(
-            `  ${result} ${champ.padEnd(15)} ${kda.padEnd(12)} CS:${cs.toString().padEnd(5)} ${duration}min  ${queue.padEnd(10)} ${date}`,
-          );
-        }
-
-        // Print summary after all matches
-        if (totalGames > 0) {
-          const totalWR = ((totalWins / totalGames) * 100).toFixed(1);
-          console.log(
-            chalk.bold(
-              `\n  WR last ${totalGames} Games: ${totalWins}W ${totalGames - totalWins}L (${totalWR}%)`,
+            chalk.red(
+              `${acc.gameName}#${acc.tagLine} (${acc.region})`.padEnd(30) +
+                "✗ Error",
             ),
           );
         }
-      } catch (err) {
-        console.log(chalk.red(`  ✗ ${err.message}`));
+      } else {
+        // Detailed mode - original behavior
+        console.log(
+          chalk.bold(`\n── ${acc.gameName}#${acc.tagLine} (${acc.region}) ──`),
+        );
+
+        try {
+          // Fetch and print rank immediately
+          const riot = await getAccountByRiotId(
+            acc.gameName,
+            acc.tagLine,
+            acc.region,
+          );
+
+          const rank = await getRankInfo(riot.puuid, acc.region);
+          const soloQ = rank.find((r) => r.queueType === "RANKED_SOLO_5x5");
+          const flexQ = rank.find((r) => r.queueType === "RANKED_FLEX_SR");
+
+          if (soloQ) {
+            const wr = (
+              (soloQ.wins / (soloQ.wins + soloQ.losses)) *
+              100
+            ).toFixed(1);
+            console.log(
+              `  SoloQ: ${soloQ.tier} ${soloQ.rank} ${soloQ.leaguePoints}LP (${soloQ.wins}W ${soloQ.losses}L) ${wr}% WR`,
+            );
+          } else {
+            console.log(`  SoloQ: Unranked`);
+          }
+
+          if (flexQ) {
+            const wr = (
+              (flexQ.wins / (flexQ.wins + flexQ.losses)) *
+              100
+            ).toFixed(1);
+            console.log(
+              `  FlexQ: ${flexQ.tier} ${flexQ.rank} ${flexQ.leaguePoints}LP (${flexQ.wins}W ${flexQ.losses}L) ${wr}% WR`,
+            );
+          } else {
+            console.log(`  FlexQ: Unranked`);
+          }
+
+          // Fetch and print in-game status immediately
+          const inGame = await getCurrentGame(riot.puuid, acc.region);
+          if (inGame) {
+            const player = inGame.participants.find(
+              (p) => p.puuid === riot.puuid,
+            );
+            const champName = player?.championId
+              ? await getChampionName(player.championId)
+              : "unknown";
+            console.log(chalk.yellow(`  🎮 In game — ${champName}`));
+          }
+
+          // Fetch match IDs, then print each match as it loads
+          const matchIds = await getMatchHistory(riot.puuid, acc.region, 20);
+          console.log(chalk.cyan(`\n  Last ${matchIds.length} Games:`));
+
+          let totalWins = 0;
+          let totalGames = 0;
+
+          for (const matchId of matchIds) {
+            const match = await getMatch(matchId, acc.region);
+            const player = match.info.participants.find(
+              (p) => p.puuid === riot.puuid,
+            );
+            if (!player) continue;
+
+            const won = player.win;
+            const kda = `${player.kills}/${player.deaths}/${player.assists}`;
+            const champ = player.championName;
+            const cs = player.totalMinionsKilled + player.neutralMinionsKilled;
+            const duration = Math.floor(match.info.gameDuration / 60);
+            const queue = getQueueName(match.info.queueId);
+            const date = new Date(
+              match.info.gameStartTimestamp,
+            ).toLocaleDateString("it-IT");
+
+            totalGames++;
+            if (won) totalWins++;
+
+            // Print each match immediately as it resolves
+            const result = won ? chalk.green("W") : chalk.red("L");
+            console.log(
+              `  ${result} ${champ.padEnd(15)} ${kda.padEnd(12)} CS:${cs.toString().padEnd(5)} ${duration}min  ${queue.padEnd(10)} ${date}`,
+            );
+          }
+
+          // Print summary after all matches
+          if (totalGames > 0) {
+            const totalWR = ((totalWins / totalGames) * 100).toFixed(1);
+            console.log(
+              chalk.bold(
+                `\n  WR last ${totalGames} Games: ${totalWins}W ${totalGames - totalWins}L (${totalWR}%)`,
+              ),
+            );
+          }
+        } catch (err) {
+          console.log(chalk.red(`  ✗ ${err.message}`));
+        }
       }
     }
     console.log("");

@@ -9,17 +9,24 @@ Built with Node.js, Twitch API, and Riot Games API.
 ## Features
 
 **Twitch**
+
 - Live status, viewer count, stream title, current game
 
 **League of Legends**
+
 - SoloQ and FlexQ rank with winrate
 - In-game detection with champion name
 - Last 20 matches with KDA, CS, duration, queue type, date
 - Winrate breakdown per queue type
+- Brief mode for quick rank checks (minimal API calls)
+- Last game date display
 
 **Accounts**
+
 - Track streamers with their linked LoL accounts
 - Track LoL accounts standalone, without a Twitch channel
+- Bulk import accounts from JSON files
+- Automatic duplicate detection
 
 ## Installation
 
@@ -86,6 +93,57 @@ streamtracker check-lol
 streamtracker remove-lol DesperateNasus#TWTV#euw1
 ```
 
+## Bulk Import
+
+```bash
+# Import accounts and/or streamers from JSON file
+
+streamtracker import ./accounts.json
+```
+
+## JSON file format
+
+```json
+{
+  "lolAccounts": [
+    {
+      "gameName": "Player1",
+      "tagLine": "tag1",
+      "region": "euw1"
+    },
+    {
+      "gameName": "Player2",
+      "tagLine": "tag2",
+      "region": "na1"
+    }
+  ],
+  "streamers": [
+    {
+      "twitch": "streamer1",
+      "lolAccounts": [
+        {
+          "gameName": "Account1",
+          "tagLine": "tag1",
+          "region": "euw1"
+        }
+      ]
+    }
+  ]
+}
+```
+
+**The import command will:**
+
+- Add standalone LoL accounts to the global account list
+
+- Add streamers and verify they exist on Twitch
+
+- Link streamers to their LoL accounts
+
+- Skip duplicates automatically with clear warnings
+
+- Show a detailed summary of imported and skipped items
+
 ### Example output
 
 ```
@@ -117,7 +175,7 @@ streamtracker remove-lol DesperateNasus#TWTV#euw1
 
 ## Supported regions
 
-`euw1` `eun1` `na1` `kr` `br1` `la1` `la2` `tr1` `ru` `jp1` `oc1`
+`euw1` `eun1` `na1` `kr` `br1` `la1` `la2` `tr1` `ru` `jp1` `oc1` `pbe1`
 
 ## Tech stack
 
@@ -134,7 +192,3 @@ streamtracker remove-lol DesperateNasus#TWTV#euw1
 - [ ] Multi-streamer check in parallel
 - [ ] Champion stats across last N games
 - [ ] Notifications when a streamer goes live
-
-## License
-
-MIT
