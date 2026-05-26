@@ -1,0 +1,440 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #0a0a0a;
+  --surface: #111111;
+  --border: #1e1e1e;
+  --text: #e8e8e8;
+  --muted: #555;
+  --twitch: #9147ff;
+  --lol: #c89b3c;
+  --live: #ff4444;
+  --win: #00c853;
+  --loss: #ff1744;
+  --mono: "IBM Plex Mono", monospace;
+  --display: "Syne", sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* noise overlay */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 999;
+}
+
+header {
+  border-bottom: 1px solid var(--border);
+  padding: 24px 40px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  background: rgba(10, 10, 10, 0.95);
+  backdrop-filter: blur(8px);
+  z-index: 10;
+}
+
+.logo {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text);
+}
+
+.logo span {
+  color: var(--twitch);
+}
+
+.header-tag {
+  font-size: 10px;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: 2px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 6px 14px;
+  border-radius: 2px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+}
+
+.btn:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.btn-primary {
+  background: var(--twitch);
+  border-color: var(--twitch);
+  color: white;
+}
+
+.btn-primary:hover {
+  opacity: 0.85;
+}
+
+main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px;
+}
+
+.section-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-label::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* streamer cards */
+.streamers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-bottom: 48px;
+}
+
+.streamer-card {
+  background: var(--surface);
+  padding: 20px;
+  transition: background 0.15s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.streamer-card:hover {
+  background: #161616;
+}
+
+.streamer-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--twitch);
+  transform: scaleY(0);
+  transition: transform 0.2s;
+  transform-origin: bottom;
+}
+
+.streamer-card:hover::before {
+  transform: scaleY(1);
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--border);
+  border: 1px solid var(--border);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.avatar-placeholder {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.streamer-name {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: var(--live);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--live);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
+
+.offline-badge {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.stream-info {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stream-title {
+  font-size: 11px;
+  color: #888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 12px;
+}
+
+.lol-accounts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.lol-account {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+}
+
+.lol-name {
+  color: var(--lol);
+}
+
+.rank-badge {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+}
+
+.rank-challenger {
+  color: #f4c874;
+}
+.rank-grandmaster {
+  color: #e8543a;
+}
+.rank-master {
+  color: #9d4dc7;
+}
+.rank-diamond {
+  color: #57a7e0;
+}
+.rank-emerald {
+  color: #4caf82;
+}
+.rank-platinum {
+  color: #4db8b8;
+}
+.rank-gold {
+  color: #c89b3c;
+}
+.rank-silver {
+  color: #aaa;
+}
+.rank-bronze {
+  color: #a06040;
+}
+
+/* lol standalone section */
+.lol-table {
+  border: 1px solid var(--border);
+  margin-bottom: 48px;
+}
+
+.lol-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  transition: background 0.15s;
+  cursor: pointer;
+}
+
+.lol-row:last-child {
+  border-bottom: none;
+}
+.lol-row:hover {
+  background: #161616;
+}
+
+.lol-row-header {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: default;
+}
+
+.lol-row-header:hover {
+  background: transparent;
+}
+
+.col-name {
+  font-size: 12px;
+  color: var(--lol);
+}
+.col-rank {
+  font-size: 11px;
+}
+.col-wr {
+  font-size: 11px;
+  color: var(--muted);
+}
+.col-status {
+  font-size: 11px;
+  text-align: right;
+}
+
+/* empty state */
+.empty {
+  padding: 48px 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  border: 1px solid var(--border);
+  margin-bottom: 48px;
+}
+
+.empty-icon {
+  font-size: 28px;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
+.empty-text {
+  margin-bottom: 16px;
+}
+
+/* footer */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 20px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.footer-cmd {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: 2px;
+  font-size: 11px;
+  color: var(--twitch);
+}
+
+/* animations */
+.fade-in {
+  animation: fadeIn 0.4s ease both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.streamer-card:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.streamer-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.streamer-card:nth-child(3) {
+  animation-delay: 0.15s;
+}
+.streamer-card:nth-child(4) {
+  animation-delay: 0.2s;
+}

@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StreamTracker</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Syne:wght@400;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <header>
+      <div class="logo">Stream<span>Tracker</span></div>
+      <div class="header-tag">v1.0.0</div>
+      <div class="header-actions">
+        <button class="btn">Refresh</button>
+        <button class="btn btn-primary">+ Add Streamer</button>
+      </div>
+    </header>
+    <div
+      style="
+        background: repeating-linear-gradient(
+          90deg,
+          #1a1400 0px,
+          #1a1400 20px,
+          #161000 20px,
+          #161000 40px
+        );
+        border-bottom: 1px solid #332800;
+        padding: 7px 40px;
+        text-align: center;
+        font-size: 11px;
+        color: #886622;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      "
+    >
+      ⚠ Under development — all data is static mock, not live
+    </div>
+    <div
+      style="
+        background: #0a1a0a;
+        border-bottom: 1px solid #1a331a;
+        padding: 7px 40px;
+        text-align: center;
+        font-size: 11px;
+        color: #3a7a3a;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      "
+    >
+      ✓ CLI is live — run
+      <span
+        style="
+          color: #5aaa5a;
+          font-family: &quot;IBM Plex Mono&quot;, monospace;
+        "
+        >npm install -g streamtracker</span
+      >
+      to get started
+    </div>
+
+    <main>
+      <!-- Streamers section -->
+      <div class="section-label">Streamers</div>
+
+      <div class="streamers-grid">
+        <!-- Card: LIVE -->
+        <div class="streamer-card fade-in">
+          <div class="card-top">
+            <div class="avatar-placeholder">C</div>
+            <div>
+              <div class="streamer-name">Caedrel</div>
+              <div class="live-badge"><span class="live-dot"></span> Live</div>
+            </div>
+          </div>
+          <div class="stream-info">League of Legends · 58,406 viewers</div>
+          <div class="stream-title">"HLE VS DK BO5 - EWC QUALIFIER"</div>
+          <div class="lol-accounts">
+            <div class="lol-account">
+              <span class="lol-name">Caedrel#EUW</span>
+              <span class="rank-badge rank-challenger"
+                >CHALLENGER · 2100LP</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Card: offline -->
+        <div class="streamer-card fade-in">
+          <div class="card-top">
+            <div class="avatar-placeholder">D</div>
+            <div>
+              <div class="streamer-name">DesperateNasus</div>
+              <div class="offline-badge">● Offline</div>
+            </div>
+          </div>
+          <div class="stream-title" style="color: var(--muted)">
+            Last seen 2h ago
+          </div>
+          <div class="lol-accounts">
+            <div class="lol-account">
+              <span class="lol-name">DesperateNasus#TWTV</span>
+              <span class="rank-badge rank-challenger"
+                >CHALLENGER · 2250LP</span
+              >
+            </div>
+            <div class="lol-account">
+              <span class="lol-name">DesperateNasus#KR</span>
+              <span class="rank-badge rank-master">MASTER · 286LP</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card: LIVE -->
+        <div class="streamer-card fade-in">
+          <div class="card-top">
+            <div class="avatar-placeholder">D</div>
+            <div>
+              <div class="streamer-name">SpearShot</div>
+              <div class="live-badge"><span class="live-dot"></span> Live</div>
+            </div>
+          </div>
+          <div class="stream-info">League of Legends · 1,204 viewers</div>
+          <div class="stream-title">"ranked grind"</div>
+          <div class="lol-accounts">
+            <div class="lol-account">
+              <span class="lol-name">SpearShot#EUW</span>
+              <span class="rank-badge rank-emerald">EMERALD I · 80LP</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LoL accounts section -->
+      <div class="section-label">LoL Accounts</div>
+
+      <div class="lol-table">
+        <div class="lol-row lol-row-header">
+          <div>Account</div>
+          <div>SoloQ</div>
+          <div>FlexQ</div>
+          <div style="text-align: right">Status</div>
+        </div>
+        <div class="lol-row fade-in">
+          <div class="col-name">DesperateNasus#TWTV</div>
+          <div class="col-rank rank-challenger">CHALLENGER I · 2250LP</div>
+          <div class="col-wr">Unranked</div>
+          <div class="col-status" style="color: var(--live)">🎮 In game</div>
+        </div>
+        <div class="lol-row fade-in">
+          <div class="col-name">Caedrel#EUW</div>
+          <div class="col-rank rank-challenger">CHALLENGER I · 2100LP</div>
+          <div class="col-wr">Unranked</div>
+          <div class="col-status" style="color: var(--muted)">Idle</div>
+        </div>
+        <div class="lol-row fade-in">
+          <div class="col-name">SpearShot#EUW</div>
+          <div class="col-rank rank-emerald">EMERALD I · 80LP</div>
+          <div class="col-rank rank-grandmaster">GM I · 1164LP</div>
+          <div class="col-status" style="color: var(--muted)">Idle</div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <div>StreamTracker — Twitch + LoL CLI & GUI</div>
+      <div>
+        <span class="footer-cmd">streamtracker check</span>
+        &nbsp;&nbsp;
+        <span class="footer-cmd">streamtracker check-lol</span>
+      </div>
+    </footer>
+  </body>
+</html>
